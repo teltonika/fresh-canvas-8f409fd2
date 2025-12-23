@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Logo } from "./Logo";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", active: true },
@@ -37,13 +38,11 @@ export function Header({ onAnalyticsClick, onGeofenceClick, onDriversClick }: He
   return (
     <header className="h-16 glass border-b border-border/50 flex items-center justify-between px-6 sticky top-0 z-50">
       {/* Logo */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-primary">
-          <Car className="w-5 h-5 text-primary-foreground" />
-        </div>
-        <div>
-          <h1 className="text-lg font-bold text-gradient">EEVY GPS</h1>
-          <p className="text-[10px] text-muted-foreground -mt-0.5">FLEET MANAGEMENT</p>
+      <div className="flex items-center gap-3 group cursor-pointer">
+        <Logo size="md" />
+        <div className="transition-transform duration-300 group-hover:translate-x-0.5">
+          <h1 className="text-lg font-bold text-gradient tracking-tight">EEVY GPS</h1>
+          <p className="text-[10px] text-muted-foreground -mt-0.5 tracking-widest uppercase">Fleet Management</p>
         </div>
       </div>
 
