@@ -42,8 +42,8 @@ export function Header({ onAnalyticsClick, onGeofenceClick, onDriversClick }: He
           <Car className="w-5 h-5 text-primary-foreground" />
         </div>
         <div>
-          <h1 className="text-lg font-bold text-gradient">FleetTrack</h1>
-          <p className="text-[10px] text-muted-foreground -mt-0.5">GPS MONITORING</p>
+          <h1 className="text-lg font-bold text-gradient">EEVY GPS</h1>
+          <p className="text-[10px] text-muted-foreground -mt-0.5">FLEET MANAGEMENT</p>
         </div>
       </div>
 

@@ -307,7 +307,6 @@ const Index = () => {
       <DriverManager
         isVisible={showDrivers}
         onClose={() => setShowDrivers(false)}
-        vehicles={vehicles}
       />
     </div>
   );

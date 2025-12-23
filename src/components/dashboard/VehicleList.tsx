@@ -14,7 +14,6 @@ import {
   User,
   Wifi,
   Power,
-  StopCircle,
   Navigation,
   Timer,
   Zap
@@ -153,295 +152,174 @@ export function VehicleList({ vehicles, selectedId, onSelect }: VehicleListProps
   );
 }
 
-function VehicleCard({ 
-  vehicle, 
-  isSelected, 
-  onClick,
-  delay = 0
-}: { 
-  vehicle: Vehicle; 
-  isSelected: boolean; 
+interface VehicleCardProps {
+  vehicle: Vehicle;
+  isSelected: boolean;
   onClick: () => void;
-  delay?: number;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  
-  const statusColors = {
-    moving: "bg-success",
-    stopped: "bg-destructive",
-    idle: "bg-warning",
+  delay: number;
+}
+
+function VehicleCard({ vehicle, isSelected, onClick, delay }: VehicleCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const statusConfig = {
+    moving: { color: 'bg-success', text: 'text-success', label: 'Moving', icon: Navigation },
+    stopped: { color: 'bg-destructive', text: 'text-destructive', label: 'Stopped', icon: Power },
+    idle: { color: 'bg-warning', text: 'text-warning', label: 'Idle', icon: Timer },
   };
 
-  const statusGlow = {
-    moving: "shadow-[0_0_12px_rgba(34,197,94,0.6)]",
-    stopped: "shadow-[0_0_12px_rgba(239,68,68,0.6)]",
-    idle: "shadow-[0_0_12px_rgba(234,179,8,0.6)]",
-  };
-
-  const statusText = {
-    moving: "Moving",
-    stopped: "Stopped",
-    idle: "Idle",
-  };
-
-  // Default values for extended stats
-  const tripDuration = vehicle.tripDuration || "00:00:00";
-  const tripDistance = vehicle.tripDistance || 0;
-  const maxSpeed = vehicle.maxSpeed || vehicle.speed;
-  const totalDuration = vehicle.totalDuration || "00:00:00";
-  const totalDistance = vehicle.totalDistance || 0;
-  const drivingScore = vehicle.drivingScore || 0;
-  const harshAcceleration = vehicle.harshAcceleration || 0;
-  const harshBraking = vehicle.harshBraking || 0;
-  const harshCornering = vehicle.harshCornering || 0;
-  const signalStrength = vehicle.signalStrength || 100;
-  const tripCount = vehicle.tripCount || 0;
+  const status = statusConfig[vehicle.status];
 
   return (
     <div 
-      className={`rounded-xl cursor-pointer overflow-hidden animate-fade-in group relative
-        transition-all duration-300 ease-out
-        ${isSelected 
-          ? "bg-gradient-to-br from-black/95 via-black/90 to-primary/10 border border-primary/50" 
-          : "bg-gradient-to-br from-black/90 to-black/70 border border-border/20 hover:border-primary/30 hover:shadow-[0_0_15px_rgba(0,255,170,0.1)]"
-        }
-        ${!isSelected && "hover:translate-y-[-2px] hover:scale-[1.01]"}
-      `}
+      className={`p-3 rounded-xl cursor-pointer transition-all duration-300 animate-fade-in ${
+        isSelected 
+          ? "bg-primary/10 border border-primary/30 shadow-[0_0_15px_rgba(0,255,170,0.15)]" 
+          : "bg-secondary/30 border border-transparent hover:bg-secondary/50 hover:border-border/50"
+      }`}
       style={{ animationDelay: `${delay}ms` }}
       onClick={onClick}
     >
-      {/* Pulsing glow effect for selected card */}
-      {isSelected && (
-        <div className="absolute inset-0 rounded-xl bg-primary/5 animate-pulse pointer-events-none" />
-      )}
-      {isSelected && (
-        <div className="absolute inset-0 rounded-xl border-2 border-primary/30 animate-[pulse_2s_ease-in-out_infinite] pointer-events-none" 
-          style={{ boxShadow: '0 0 20px rgba(0,255,170,0.2), inset 0 0 20px rgba(0,255,170,0.05)' }}
-        />
-      )}
-      
-      {/* Header */}
-      <div className="p-3 border-b border-border/20">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="relative">
-            <div className={`w-3 h-3 rounded-full ${statusColors[vehicle.status]} ${statusGlow[vehicle.status]} transition-all duration-300`} />
-            {vehicle.status === 'moving' && (
-              <div className="absolute inset-0 rounded-full bg-success animate-ping opacity-40" />
-            )}
+      {/* Main content */}
+      <div className="flex items-start gap-3">
+        {/* Status indicator */}
+        <div className="relative">
+          <div className={`w-10 h-10 rounded-lg ${status.color}/20 border border-current/30 flex items-center justify-center ${status.text}`}>
+            <Car className="w-5 h-5" />
           </div>
-          <h4 className="font-semibold text-foreground text-sm flex-1 group-hover:text-primary transition-colors duration-300">
-            {vehicle.name}
-          </h4>
-          <Badge 
-            variant="outline" 
-            className="text-[10px] border-primary/50 text-primary bg-primary/10 px-2 py-0.5 
-              transition-all duration-300 group-hover:bg-primary/20 group-hover:shadow-[0_0_8px_rgba(0,255,170,0.3)]"
-          >
-            {vehicle.plate}
-          </Badge>
+          <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${status.color} border-2 border-background ${vehicle.status === 'moving' ? 'animate-pulse' : ''}`} />
         </div>
-        
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-[10px] bg-secondary/30 px-2 py-0.5 backdrop-blur-sm">
-            <User className="w-2.5 h-2.5 mr-1 text-primary" />
-            {vehicle.driver || "Unknown Driver"}
-          </Badge>
-        </div>
-      </div>
 
-      {/* Quick Stats Row 1 */}
-      <div className="px-3 py-2 grid grid-cols-4 gap-2 border-b border-border/10 text-[10px]">
-        <div className="flex items-center gap-1.5 text-muted-foreground group/stat hover:text-primary transition-colors duration-200">
-          <Clock className="w-3 h-3 text-primary/70 group-hover/stat:text-primary transition-colors" />
-          <span className="font-mono">{tripDuration}</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-muted-foreground group/stat hover:text-primary transition-colors duration-200">
-          <Route className="w-3 h-3 text-primary/70 group-hover/stat:text-primary transition-colors" />
-          <span className="font-mono">{tripDistance} km</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <User className="w-3 h-3" />
-          <span>/</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-muted-foreground group/stat hover:text-success transition-colors duration-200">
-          <Battery className="w-3 h-3 text-success/70 group-hover/stat:text-success transition-colors" />
-          <span className="font-mono">{vehicle.battery.toFixed(1)}</span>
-        </div>
-      </div>
+        {/* Vehicle info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <h3 className="font-medium text-foreground truncate">{vehicle.name}</h3>
+            <Badge variant="outline" className={`text-[10px] ${status.text} border-current/30`}>
+              {status.label}
+            </Badge>
+          </div>
+          
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+            <span className="font-mono">{vehicle.plate}</span>
+            <span className="text-border">•</span>
+            <User className="w-3 h-3" />
+            <span className="truncate">{vehicle.driver}</span>
+          </div>
 
-      {/* Quick Stats Row 2 */}
-      <div className="px-3 py-2 grid grid-cols-4 gap-2 border-b border-border/10 text-[10px]">
-        <div className="flex items-center gap-1 text-muted-foreground col-span-1">
-          <div className="flex gap-0.5">
-            {[1,2,3,4,5].map(i => (
-              <div 
-                key={i} 
-                className={`w-1 h-2.5 rounded-sm transition-all duration-300 ${
-                  i <= Math.ceil(signalStrength/20) 
-                    ? 'bg-success shadow-[0_0_4px_rgba(34,197,94,0.5)]' 
-                    : 'bg-muted/30'
-                }`}
-                style={{ animationDelay: `${i * 100}ms` }}
-              />
-            ))}
+          <div className="flex items-center gap-3 text-xs">
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Gauge className="w-3 h-3" />
+              <span className={vehicle.speed > 0 ? 'text-primary font-mono' : 'font-mono'}>{vehicle.speed} km/h</span>
+            </div>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Battery className="w-3 h-3" />
+              <span className="font-mono">{vehicle.battery.toFixed(1)}V</span>
+            </div>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Signal className="w-3 h-3" />
+              <span className="font-mono">{vehicle.signalStrength}%</span>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <Power className={`w-3 h-3 transition-all duration-300 ${
-            vehicle.ignitionStatus !== false 
-              ? 'text-success drop-shadow-[0_0_4px_rgba(34,197,94,0.5)]' 
-              : 'text-muted/50'
-          }`} />
-          <span className={vehicle.ignitionStatus !== false ? 'text-success' : 'text-muted-foreground'}>
-            {vehicle.ignitionStatus !== false ? 'ON' : 'OFF'}
-          </span>
-        </div>
-        <div className={`flex items-center gap-1.5 transition-colors duration-200 ${
-          vehicle.status === 'moving' ? 'text-success' :
-          vehicle.status === 'stopped' ? 'text-destructive' : 'text-warning'
-        }`}>
-          <StopCircle className="w-3 h-3" />
-          <span>{statusText[vehicle.status]}</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <Navigation className="w-3 h-3 text-primary/70" />
-          <span className="font-mono">{Math.round(vehicle.heading)}°</span>
-        </div>
-      </div>
 
-      {/* Speed Stats */}
-      <div className="px-3 py-2 grid grid-cols-4 gap-2 border-b border-border/10 text-[10px]">
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <span>/</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-muted-foreground group/stat hover:text-primary transition-colors duration-200">
-          <Gauge className="w-3 h-3 text-primary/70 group-hover/stat:text-primary transition-colors" />
-          <span className="font-mono">{maxSpeed} km/h</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-success">
-          <Zap className="w-3 h-3 drop-shadow-[0_0_4px_rgba(34,197,94,0.5)]" />
-          <span className="font-mono font-semibold">{vehicle.speed} km/h</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <Timer className="w-3 h-3" />
-          <span className="font-mono">{tripCount}</span>
-        </div>
+        {/* Expand toggle */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="w-6 h-6 text-muted-foreground"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+          }}
+        >
+          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </Button>
       </div>
 
       {/* Address */}
-      <div className="px-3 py-2 border-b border-border/10">
-        <div className="flex items-start gap-1.5">
-          <MapPin className="w-3 h-3 text-primary flex-shrink-0 mt-0.5 drop-shadow-[0_0_4px_rgba(0,255,170,0.4)]" />
-          <p className="text-[10px] text-muted-foreground line-clamp-1 group-hover:text-foreground/80 transition-colors duration-200">
-            {vehicle.address}
-          </p>
-        </div>
+      <div className="flex items-start gap-2 mt-2 text-[11px] text-muted-foreground">
+        <MapPin className="w-3 h-3 flex-shrink-0 mt-0.5" />
+        <span className="truncate">{vehicle.address}</span>
       </div>
 
-      {/* Summary Stats */}
-      <div className="px-3 py-2 grid grid-cols-4 gap-1.5 border-b border-border/10">
-        <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg p-1.5 text-center 
-          border border-primary/20 transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_10px_rgba(0,255,170,0.2)]">
-          <div className="text-[8px] text-primary/70 mb-0.5">Total duration</div>
-          <div className="text-[10px] font-mono text-primary font-semibold">{totalDuration}</div>
-        </div>
-        <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg p-1.5 text-center 
-          border border-primary/20 transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_10px_rgba(0,255,170,0.2)]">
-          <div className="text-[8px] text-primary/70 mb-0.5">Total distance</div>
-          <div className="text-[10px] font-mono text-primary font-semibold">{totalDistance} km</div>
-        </div>
-        <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg p-1.5 text-center 
-          border border-primary/20 transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_10px_rgba(0,255,170,0.2)]">
-          <div className="text-[8px] text-primary/70 mb-0.5">Max speed</div>
-          <div className="text-[10px] font-mono text-primary font-semibold">{maxSpeed} km/h</div>
-        </div>
-        <div className={`rounded-lg p-1.5 text-center border transition-all duration-300 hover:shadow-[0_0_10px] ${
-          drivingScore >= 7 
-            ? 'bg-gradient-to-br from-success/20 to-success/5 border-success/30 hover:border-success/50 hover:shadow-success/20' 
-            : drivingScore >= 4 
-              ? 'bg-gradient-to-br from-warning/20 to-warning/5 border-warning/30 hover:border-warning/50 hover:shadow-warning/20' 
-              : 'bg-gradient-to-br from-destructive/20 to-destructive/5 border-destructive/30 hover:border-destructive/50 hover:shadow-destructive/20'
-        }`}>
-          <div className={`text-[8px] mb-0.5 ${
-            drivingScore >= 7 ? 'text-success/70' : drivingScore >= 4 ? 'text-warning/70' : 'text-destructive/70'
-          }`}>Driving score</div>
-          <div className={`text-[10px] font-mono font-semibold ${
-            drivingScore >= 7 ? 'text-success' : drivingScore >= 4 ? 'text-warning' : 'text-destructive'
-          }`}>{drivingScore.toFixed(1)}</div>
-        </div>
+      {/* Last update */}
+      <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground/70">
+        <Clock className="w-3 h-3" />
+        <span>Updated {vehicle.lastUpdate}</span>
       </div>
 
-      {/* Expand Toggle */}
-      <button 
-        className="w-full px-3 py-2 flex items-center justify-center gap-1 text-[10px] text-muted-foreground 
-          hover:text-primary hover:bg-primary/5 transition-all duration-300"
-        onClick={(e) => {
-          e.stopPropagation();
-          setExpanded(!expanded);
-        }}
-      >
-        <div className={`transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}>
-          <ChevronDown className="w-3 h-3" />
-        </div>
-        <span>{expanded ? "Less details" : "More details"}</span>
-      </button>
+      {/* Expanded details */}
+      {isExpanded && (
+        <div className="mt-3 pt-3 border-t border-border/50 space-y-3 animate-fade-in">
+          {/* Trip info */}
+          <div className="grid grid-cols-3 gap-2">
+            <StatItem label="Trip" value={vehicle.tripDuration || '--'} icon={Timer} />
+            <StatItem label="Distance" value={`${vehicle.tripDistance || 0} km`} icon={Route} />
+            <StatItem label="Max" value={`${vehicle.maxSpeed || 0} km/h`} icon={Gauge} />
+          </div>
 
-      {/* Expanded Details */}
-      <div 
-        className={`overflow-hidden transition-all duration-500 ease-out ${
-          expanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-        }`}
-      >
-        <div className="px-3 pb-3 space-y-3 border-t border-border/10 pt-3">
-          {/* Harsh Acceleration */}
-          <div className="group/progress">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] text-muted-foreground group-hover/progress:text-foreground transition-colors">
-                Harsh acceleration
-              </span>
-              <span className="text-[10px] font-mono text-warning">{harshAcceleration.toFixed(2)}%</span>
+          {/* Total stats */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-background/50 rounded-lg p-2">
+              <p className="text-[10px] text-muted-foreground mb-1">Total Distance</p>
+              <p className="text-sm font-mono font-semibold text-foreground">{vehicle.totalDistance?.toLocaleString() || 0} km</p>
             </div>
-            <div className="h-1.5 bg-secondary/30 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-warning/70 to-warning rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_rgba(234,179,8,0.4)]"
-                style={{ width: `${harshAcceleration}%` }}
-              />
+            <div className="bg-background/50 rounded-lg p-2">
+              <p className="text-[10px] text-muted-foreground mb-1">Driving Score</p>
+              <div className="flex items-center gap-2">
+                <Progress value={(vehicle.drivingScore || 0) * 10} className="h-1.5 flex-1" />
+                <span className="text-sm font-mono font-semibold text-foreground">{vehicle.drivingScore || 0}</span>
+              </div>
             </div>
           </div>
 
-          {/* Harsh Braking */}
-          <div className="group/progress">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] text-muted-foreground group-hover/progress:text-foreground transition-colors">
-                Harsh braking
-              </span>
-              <span className="text-[10px] font-mono text-primary">{harshBraking.toFixed(2)}%</span>
-            </div>
-            <div className="h-1.5 bg-secondary/30 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-primary/70 to-primary rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_rgba(0,255,170,0.4)]"
-                style={{ width: `${harshBraking}%` }}
-              />
+          {/* Harsh events */}
+          <div className="space-y-1.5">
+            <p className="text-[10px] text-muted-foreground font-medium">Harsh Events (per 100km)</p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-background/50 rounded p-1.5 text-center">
+                <Zap className="w-3 h-3 mx-auto text-warning mb-0.5" />
+                <p className="text-[10px] font-mono">{vehicle.harshAcceleration || 0}</p>
+                <p className="text-[8px] text-muted-foreground">Accel</p>
+              </div>
+              <div className="bg-background/50 rounded p-1.5 text-center">
+                <Zap className="w-3 h-3 mx-auto text-destructive mb-0.5" />
+                <p className="text-[10px] font-mono">{vehicle.harshBraking || 0}</p>
+                <p className="text-[8px] text-muted-foreground">Brake</p>
+              </div>
+              <div className="bg-background/50 rounded p-1.5 text-center">
+                <Zap className="w-3 h-3 mx-auto text-primary mb-0.5" />
+                <p className="text-[10px] font-mono">{vehicle.harshCornering || 0}</p>
+                <p className="text-[8px] text-muted-foreground">Corner</p>
+              </div>
             </div>
           </div>
 
-          {/* Harsh Cornering */}
-          <div className="group/progress">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] text-muted-foreground group-hover/progress:text-foreground transition-colors">
-                Harsh cornering
+          {/* Status indicators */}
+          <div className="flex items-center gap-4 text-[10px]">
+            <div className="flex items-center gap-1.5">
+              <Power className={`w-3 h-3 ${vehicle.ignitionStatus ? 'text-success' : 'text-muted-foreground'}`} />
+              <span className={vehicle.ignitionStatus ? 'text-success' : 'text-muted-foreground'}>
+                Ignition {vehicle.ignitionStatus ? 'ON' : 'OFF'}
               </span>
-              <span className="text-[10px] font-mono text-success">{harshCornering.toFixed(2)}%</span>
             </div>
-            <div className="h-1.5 bg-secondary/30 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-success/70 to-success rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_rgba(34,197,94,0.4)]"
-                style={{ width: `${harshCornering}%` }}
-              />
+            <div className="flex items-center gap-1.5">
+              <Wifi className="w-3 h-3 text-primary" />
+              <span className="text-muted-foreground">{vehicle.signalStrength}% Signal</span>
             </div>
           </div>
         </div>
-      </div>
+      )}
+    </div>
+  );
+}
+
+function StatItem({ label, value, icon: Icon }: { label: string; value: string; icon: React.ElementType }) {
+  return (
+    <div className="bg-background/50 rounded-lg p-2 text-center">
+      <Icon className="w-3 h-3 mx-auto text-muted-foreground mb-1" />
+      <p className="text-xs font-mono font-semibold text-foreground">{value}</p>
+      <p className="text-[9px] text-muted-foreground">{label}</p>
     </div>
   );
 }
