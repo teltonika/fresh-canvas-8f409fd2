@@ -96,6 +96,26 @@ export default {
           "0%, 100%": { boxShadow: "0 0 20px hsl(var(--primary) / 0.3)" },
           "50%": { boxShadow: "0 0 40px hsl(var(--primary) / 0.5)" },
         },
+        "status-pulse": {
+          "0%, 100%": { transform: "scale(1)", opacity: "1" },
+          "50%": { transform: "scale(1.2)", opacity: "0.8" },
+        },
+        "status-ring": {
+          "0%": { transform: "scale(1)", opacity: "0.8" },
+          "100%": { transform: "scale(2)", opacity: "0" },
+        },
+        "card-hover": {
+          "0%": { transform: "translateY(0)" },
+          "100%": { transform: "translateY(-2px)" },
+        },
+        "shimmer": {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+        "bounce-subtle": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-3px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -103,6 +123,11 @@ export default {
         "fade-in": "fade-in 0.5s ease-out forwards",
         "slide-in-left": "slide-in-left 0.4s ease-out forwards",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "status-pulse": "status-pulse 2s ease-in-out infinite",
+        "status-ring": "status-ring 1.5s ease-out infinite",
+        "card-hover": "card-hover 0.2s ease-out forwards",
+        "shimmer": "shimmer 2s linear infinite",
+        "bounce-subtle": "bounce-subtle 2s ease-in-out infinite",
       },
     },
   },

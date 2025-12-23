@@ -161,40 +161,84 @@ interface VehicleCardProps {
 
 function VehicleCard({ vehicle, isSelected, onClick, delay }: VehicleCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const statusConfig = {
-    moving: { color: 'bg-success', text: 'text-success', label: 'Moving', icon: Navigation },
-    stopped: { color: 'bg-destructive', text: 'text-destructive', label: 'Stopped', icon: Power },
-    idle: { color: 'bg-warning', text: 'text-warning', label: 'Idle', icon: Timer },
+    moving: { 
+      color: 'bg-success', 
+      text: 'text-success', 
+      label: 'Moving', 
+      icon: Navigation,
+      ringColor: 'bg-success/30',
+      glowColor: 'shadow-[0_0_12px_hsl(var(--success)/0.4)]'
+    },
+    stopped: { 
+      color: 'bg-destructive', 
+      text: 'text-destructive', 
+      label: 'Stopped', 
+      icon: Power,
+      ringColor: 'bg-destructive/30',
+      glowColor: 'shadow-[0_0_12px_hsl(var(--destructive)/0.4)]'
+    },
+    idle: { 
+      color: 'bg-warning', 
+      text: 'text-warning', 
+      label: 'Idle', 
+      icon: Timer,
+      ringColor: 'bg-warning/30',
+      glowColor: 'shadow-[0_0_12px_hsl(var(--warning)/0.4)]'
+    },
   };
 
   const status = statusConfig[vehicle.status];
+  const StatusIcon = status.icon;
 
   return (
     <div 
-      className={`p-3 rounded-xl cursor-pointer transition-all duration-300 animate-fade-in ${
+      className={`group p-3 rounded-xl cursor-pointer transition-all duration-300 animate-fade-in ${
         isSelected 
-          ? "bg-primary/10 border border-primary/30 shadow-[0_0_15px_rgba(0,255,170,0.15)]" 
-          : "bg-secondary/30 border border-transparent hover:bg-secondary/50 hover:border-border/50"
+          ? "bg-primary/10 border border-primary/30 shadow-[0_0_20px_hsl(var(--primary)/0.2)] scale-[1.02]" 
+          : "bg-secondary/30 border border-transparent hover:bg-secondary/50 hover:border-border/50 hover:shadow-lg hover:-translate-y-0.5"
       }`}
       style={{ animationDelay: `${delay}ms` }}
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Main content */}
       <div className="flex items-start gap-3">
-        {/* Status indicator */}
+        {/* Status indicator with animated ring */}
         <div className="relative">
-          <div className={`w-10 h-10 rounded-lg ${status.color}/20 border border-current/30 flex items-center justify-center ${status.text}`}>
-            <Car className="w-5 h-5" />
+          <div className={`w-10 h-10 rounded-lg ${status.color}/20 border border-current/30 flex items-center justify-center ${status.text} transition-all duration-300 group-hover:scale-110 ${isHovered ? status.glowColor : ''}`}>
+            <Car className={`w-5 h-5 transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`} />
           </div>
-          <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${status.color} border-2 border-background ${vehicle.status === 'moving' ? 'animate-pulse' : ''}`} />
+          
+          {/* Animated status dot */}
+          <div className="absolute -bottom-0.5 -right-0.5">
+            {/* Outer ring animation for moving vehicles */}
+            {vehicle.status === 'moving' && (
+              <div className={`absolute inset-0 w-3 h-3 rounded-full ${status.ringColor} animate-status-ring`} />
+            )}
+            <div className={`relative w-3 h-3 rounded-full ${status.color} border-2 border-background ${vehicle.status === 'moving' ? 'animate-status-pulse' : ''}`} />
+          </div>
+          
+          {/* Live indicator for moving */}
+          {vehicle.status === 'moving' && isHovered && (
+            <div className="absolute -top-1 -left-1 px-1 py-0.5 bg-success/90 rounded text-[8px] font-bold text-success-foreground animate-bounce-subtle">
+              LIVE
+            </div>
+          )}
         </div>
 
         {/* Vehicle info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-1">
-            <h3 className="font-medium text-foreground truncate">{vehicle.name}</h3>
-            <Badge variant="outline" className={`text-[10px] ${status.text} border-current/30`}>
+            <h3 className={`font-medium text-foreground truncate transition-colors duration-200 ${isHovered ? 'text-primary' : ''}`}>{vehicle.name}</h3>
+            <Badge 
+              variant="outline" 
+              className={`text-[10px] ${status.text} border-current/30 transition-all duration-300 ${isHovered ? 'scale-105 ' + status.glowColor : ''}`}
+            >
+              <StatusIcon className="w-2.5 h-2.5 mr-1" />
               {status.label}
             </Badge>
           </div>
@@ -207,16 +251,16 @@ function VehicleCard({ vehicle, isSelected, onClick, delay }: VehicleCardProps) 
           </div>
 
           <div className="flex items-center gap-3 text-xs">
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <Gauge className="w-3 h-3" />
-              <span className={vehicle.speed > 0 ? 'text-primary font-mono' : 'font-mono'}>{vehicle.speed} km/h</span>
+            <div className={`flex items-center gap-1 transition-all duration-200 ${vehicle.speed > 0 ? 'text-primary' : 'text-muted-foreground'}`}>
+              <Gauge className={`w-3 h-3 ${vehicle.speed > 0 && isHovered ? 'animate-bounce-subtle' : ''}`} />
+              <span className="font-mono">{vehicle.speed} km/h</span>
             </div>
-            <div className="flex items-center gap-1 text-muted-foreground">
+            <div className="flex items-center gap-1 text-muted-foreground group-hover:text-foreground transition-colors duration-200">
               <Battery className="w-3 h-3" />
               <span className="font-mono">{vehicle.battery.toFixed(1)}V</span>
             </div>
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <Signal className="w-3 h-3" />
+            <div className="flex items-center gap-1 text-muted-foreground group-hover:text-foreground transition-colors duration-200">
+              <Signal className={`w-3 h-3 ${(vehicle.signalStrength || 0) > 80 ? 'text-success' : ''}`} />
               <span className="font-mono">{vehicle.signalStrength}%</span>
             </div>
           </div>
@@ -226,26 +270,34 @@ function VehicleCard({ vehicle, isSelected, onClick, delay }: VehicleCardProps) 
         <Button 
           variant="ghost" 
           size="icon" 
-          className="w-6 h-6 text-muted-foreground"
+          className="w-6 h-6 text-muted-foreground transition-all duration-200 group-hover:text-foreground hover:bg-primary/10"
           onClick={(e) => {
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}
         >
-          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+            <ChevronDown className="w-4 h-4" />
+          </div>
         </Button>
       </div>
 
-      {/* Address */}
-      <div className="flex items-start gap-2 mt-2 text-[11px] text-muted-foreground">
-        <MapPin className="w-3 h-3 flex-shrink-0 mt-0.5" />
+      {/* Address with hover effect */}
+      <div className="flex items-start gap-2 mt-2 text-[11px] text-muted-foreground group-hover:text-foreground/80 transition-colors duration-200">
+        <MapPin className="w-3 h-3 flex-shrink-0 mt-0.5 text-primary/70" />
         <span className="truncate">{vehicle.address}</span>
       </div>
 
-      {/* Last update */}
+      {/* Last update with animated indicator */}
       <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground/70">
         <Clock className="w-3 h-3" />
         <span>Updated {vehicle.lastUpdate}</span>
+        {vehicle.status === 'moving' && (
+          <span className="ml-1 flex items-center gap-1 text-success">
+            <span className="w-1.5 h-1.5 rounded-full bg-success animate-status-pulse" />
+            Live
+          </span>
+        )}
       </div>
 
       {/* Expanded details */}
