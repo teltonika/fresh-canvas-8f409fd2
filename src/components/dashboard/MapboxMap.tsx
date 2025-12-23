@@ -33,12 +33,14 @@ export function MapboxMap({ vehicles, selectedVehicleId, onVehicleClick, selecte
   const [token, setToken] = useState(() => localStorage.getItem('mapbox_token') || '');
   const [showTokenInput, setShowTokenInput] = useState(!token);
   const [isLive, setIsLive] = useState(true);
+  const [mapError, setMapError] = useState<string | null>(null);
   const { geofences } = useGeofences();
 
   const handleSaveToken = () => {
     if (token.trim()) {
       localStorage.setItem('mapbox_token', token);
       setShowTokenInput(false);
+      setMapError(null);
     }
   };
 
@@ -46,18 +48,37 @@ export function MapboxMap({ vehicles, selectedVehicleId, onVehicleClick, selecte
   useEffect(() => {
     if (!mapContainer.current || !token || showTokenInput) return;
 
-    mapboxgl.accessToken = token;
+    // Check for WebGL support first
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) {
+      setMapError('WebGL is not supported in this browser or environment. The map requires WebGL to render.');
+      return;
+    }
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [14.5, 46.05],
-      zoom: 12,
-    });
+    try {
+      mapboxgl.accessToken = token;
 
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [14.5, 46.05],
+        zoom: 12,
+        failIfMajorPerformanceCaveat: false,
+      });
 
-    map.current.on('load', () => setMapLoaded(true));
+      map.current.on('error', (e) => {
+        console.error('Mapbox error:', e);
+        setMapError('Failed to load the map. Please check your API token or try again later.');
+      });
+
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+      map.current.on('load', () => setMapLoaded(true));
+    } catch (error) {
+      console.error('Map initialization error:', error);
+      setMapError('Failed to initialize the map. This may be due to WebGL limitations in the current environment.');
+    }
 
     return () => {
       markers.current.forEach(m => m.remove());
@@ -116,6 +137,37 @@ export function MapboxMap({ vehicles, selectedVehicleId, onVehicleClick, selecte
       });
     }
   }, [selectedVehicleId, vehicles, mapLoaded]);
+
+  // Show error fallback UI
+  if (mapError) {
+    return (
+      <div className="flex-1 relative bg-background flex items-center justify-center">
+        <div className="glass border-border/50 p-8 rounded-2xl max-w-md w-full mx-4 animate-fade-in">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-destructive/20 border border-destructive/30 flex items-center justify-center">
+              <Layers className="w-6 h-6 text-destructive" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground">Map Unavailable</h3>
+              <p className="text-xs text-muted-foreground">WebGL not supported</p>
+            </div>
+          </div>
+          
+          <p className="text-sm text-muted-foreground mb-4">
+            {mapError}
+          </p>
+          
+          <p className="text-xs text-muted-foreground mb-4">
+            Try opening this app in a full browser window or ensure hardware acceleration is enabled.
+          </p>
+          
+          <Button onClick={() => { setMapError(null); setShowTokenInput(true); }} variant="outline" className="w-full">
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (showTokenInput) {
     return (
