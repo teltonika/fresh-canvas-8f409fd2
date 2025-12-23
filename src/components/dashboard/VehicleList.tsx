@@ -7,7 +7,6 @@ import {
   Signal,
   Search,
   ChevronDown,
-  ChevronUp,
   Circle,
   Clock,
   Route,
@@ -23,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 
 export interface Vehicle {
   id: string;
@@ -300,76 +300,81 @@ function VehicleCard({ vehicle, isSelected, onClick, delay }: VehicleCardProps) 
         )}
       </div>
 
-      {/* Expanded details */}
-      {isExpanded && (
-        <div className="mt-3 pt-3 border-t border-border/50 space-y-3 animate-fade-in">
-          {/* Trip info */}
-          <div className="grid grid-cols-3 gap-2">
-            <StatItem label="Trip" value={vehicle.tripDuration || '--'} icon={Timer} />
-            <StatItem label="Distance" value={`${vehicle.tripDistance || 0} km`} icon={Route} />
-            <StatItem label="Max" value={`${vehicle.maxSpeed || 0} km/h`} icon={Gauge} />
-          </div>
-
-          {/* Total stats */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-background/50 rounded-lg p-2">
-              <p className="text-[10px] text-muted-foreground mb-1">Total Distance</p>
-              <p className="text-sm font-mono font-semibold text-foreground">{vehicle.totalDistance?.toLocaleString() || 0} km</p>
-            </div>
-            <div className="bg-background/50 rounded-lg p-2">
-              <p className="text-[10px] text-muted-foreground mb-1">Driving Score</p>
-              <div className="flex items-center gap-2">
-                <Progress value={(vehicle.drivingScore || 0) * 10} className="h-1.5 flex-1" />
-                <span className="text-sm font-mono font-semibold text-foreground">{vehicle.drivingScore || 0}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Harsh events */}
-          <div className="space-y-1.5">
-            <p className="text-[10px] text-muted-foreground font-medium">Harsh Events (per 100km)</p>
+      {/* Expanded details with smooth animation */}
+      <Collapsible open={isExpanded}>
+        <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+          <div className="mt-3 pt-3 border-t border-border/50 space-y-3">
+            {/* Trip info */}
             <div className="grid grid-cols-3 gap-2">
-              <div className="bg-background/50 rounded p-1.5 text-center">
-                <Zap className="w-3 h-3 mx-auto text-warning mb-0.5" />
-                <p className="text-[10px] font-mono">{vehicle.harshAcceleration || 0}</p>
-                <p className="text-[8px] text-muted-foreground">Accel</p>
-              </div>
-              <div className="bg-background/50 rounded p-1.5 text-center">
-                <Zap className="w-3 h-3 mx-auto text-destructive mb-0.5" />
-                <p className="text-[10px] font-mono">{vehicle.harshBraking || 0}</p>
-                <p className="text-[8px] text-muted-foreground">Brake</p>
-              </div>
-              <div className="bg-background/50 rounded p-1.5 text-center">
-                <Zap className="w-3 h-3 mx-auto text-primary mb-0.5" />
-                <p className="text-[10px] font-mono">{vehicle.harshCornering || 0}</p>
-                <p className="text-[8px] text-muted-foreground">Corner</p>
-              </div>
+              <StatItem label="Trip" value={vehicle.tripDuration || '--'} icon={Timer} delay={0} />
+              <StatItem label="Distance" value={`${vehicle.tripDistance || 0} km`} icon={Route} delay={50} />
+              <StatItem label="Max" value={`${vehicle.maxSpeed || 0} km/h`} icon={Gauge} delay={100} />
             </div>
-          </div>
 
-          {/* Status indicators */}
-          <div className="flex items-center gap-4 text-[10px]">
-            <div className="flex items-center gap-1.5">
-              <Power className={`w-3 h-3 ${vehicle.ignitionStatus ? 'text-success' : 'text-muted-foreground'}`} />
-              <span className={vehicle.ignitionStatus ? 'text-success' : 'text-muted-foreground'}>
-                Ignition {vehicle.ignitionStatus ? 'ON' : 'OFF'}
-              </span>
+            {/* Total stats */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-background/50 rounded-lg p-2 transition-all duration-300 hover:bg-background/70 hover:scale-[1.02]">
+                <p className="text-[10px] text-muted-foreground mb-1">Total Distance</p>
+                <p className="text-sm font-mono font-semibold text-foreground">{vehicle.totalDistance?.toLocaleString() || 0} km</p>
+              </div>
+              <div className="bg-background/50 rounded-lg p-2 transition-all duration-300 hover:bg-background/70 hover:scale-[1.02]">
+                <p className="text-[10px] text-muted-foreground mb-1">Driving Score</p>
+                <div className="flex items-center gap-2">
+                  <Progress value={(vehicle.drivingScore || 0) * 10} className="h-1.5 flex-1" />
+                  <span className="text-sm font-mono font-semibold text-foreground">{vehicle.drivingScore || 0}</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Wifi className="w-3 h-3 text-primary" />
-              <span className="text-muted-foreground">{vehicle.signalStrength}% Signal</span>
+
+            {/* Harsh events */}
+            <div className="space-y-1.5">
+              <p className="text-[10px] text-muted-foreground font-medium">Harsh Events (per 100km)</p>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-background/50 rounded p-1.5 text-center transition-all duration-300 hover:bg-background/70 hover:scale-105 group/event">
+                  <Zap className="w-3 h-3 mx-auto text-warning mb-0.5 transition-transform group-hover/event:scale-110" />
+                  <p className="text-[10px] font-mono">{vehicle.harshAcceleration || 0}</p>
+                  <p className="text-[8px] text-muted-foreground">Accel</p>
+                </div>
+                <div className="bg-background/50 rounded p-1.5 text-center transition-all duration-300 hover:bg-background/70 hover:scale-105 group/event">
+                  <Zap className="w-3 h-3 mx-auto text-destructive mb-0.5 transition-transform group-hover/event:scale-110" />
+                  <p className="text-[10px] font-mono">{vehicle.harshBraking || 0}</p>
+                  <p className="text-[8px] text-muted-foreground">Brake</p>
+                </div>
+                <div className="bg-background/50 rounded p-1.5 text-center transition-all duration-300 hover:bg-background/70 hover:scale-105 group/event">
+                  <Zap className="w-3 h-3 mx-auto text-primary mb-0.5 transition-transform group-hover/event:scale-110" />
+                  <p className="text-[10px] font-mono">{vehicle.harshCornering || 0}</p>
+                  <p className="text-[8px] text-muted-foreground">Corner</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Status indicators */}
+            <div className="flex items-center gap-4 text-[10px]">
+              <div className="flex items-center gap-1.5 transition-colors duration-200 hover:text-foreground">
+                <Power className={`w-3 h-3 transition-all duration-300 ${vehicle.ignitionStatus ? 'text-success animate-status-pulse' : 'text-muted-foreground'}`} />
+                <span className={vehicle.ignitionStatus ? 'text-success' : 'text-muted-foreground'}>
+                  Ignition {vehicle.ignitionStatus ? 'ON' : 'OFF'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 transition-colors duration-200 hover:text-foreground">
+                <Wifi className="w-3 h-3 text-primary" />
+                <span className="text-muted-foreground">{vehicle.signalStrength}% Signal</span>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }
 
-function StatItem({ label, value, icon: Icon }: { label: string; value: string; icon: React.ElementType }) {
+function StatItem({ label, value, icon: Icon, delay = 0 }: { label: string; value: string; icon: React.ElementType; delay?: number }) {
   return (
-    <div className="bg-background/50 rounded-lg p-2 text-center">
-      <Icon className="w-3 h-3 mx-auto text-muted-foreground mb-1" />
+    <div 
+      className="bg-background/50 rounded-lg p-2 text-center transition-all duration-300 hover:bg-background/70 hover:scale-105 animate-fade-in"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <Icon className="w-3 h-3 mx-auto text-muted-foreground mb-1 transition-transform duration-200 group-hover:scale-110" />
       <p className="text-xs font-mono font-semibold text-foreground">{value}</p>
       <p className="text-[9px] text-muted-foreground">{label}</p>
     </div>
