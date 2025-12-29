@@ -1,4 +1,4 @@
-name: Trigger Deployment
+name: Trigger EEVY GPS Deployment
 
 on:
   push:
@@ -6,15 +6,35 @@ on:
       - main
 
 jobs:
-  trigger-deploy:
+  trigger-staging:
     runs-on: ubuntu-latest
+    name: Trigger Staging Deployment
     
     steps:
       - name: Trigger EEVY-GPS Staging Deployment
         run: |
-          curl -X POST \
+          echo "🚀 Triggering deployment to staging.eevy.uk..."
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token ${{ secrets.DEPLOY_TOKEN }}" \
-            https://api.github.com/repos/teltonika/EEVY-GPS/dispatches \
-            -d '{"event_type":"frontend-updated"}'
-          echo "✅ Triggered deployment to staging.eevy.uk"
+            https://api.github.com/repos/eevy-fleet/EEVY-GPS/dispatches \
+            -d '{"event_type":"frontend-updated","client_payload":{"source":"fresh-canvas","branch":"main"}}')
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          
+          if [ "$HTTP_CODE" = "204" ]; then
+            echo "✅ Successfully triggered deployment!"
+            echo ""
+            echo "The staging deployment will:"
+            echo "  1. Pull latest backend from EEVY-GPS"
+            echo "  2. Sync frontend from this repo (fresh-canvas)"
+            echo "  3. Build and deploy to staging.eevy.uk"
+            echo ""
+            echo "Check deployment status at:"
+            echo "  https://github.com/eevy-fleet/EEVY-GPS/actions"
+          else
+            echo "❌ Failed to trigger deployment (HTTP $HTTP_CODE)"
+            echo "Response: $RESPONSE"
+            exit 1
+          fi
